@@ -37,16 +37,17 @@ main{max-width:760px;margin:auto}.eyebrow{color:var(--accent);font-size:.8rem;le
 </main>
 <script>
 const SUBJECTS = {
-  kimia: {name:"Kimia", weights:[["Tugas",5],["UTS",35],["UAS",35],["Kuis",25]]},
-  matematika: {name:"Matematika", weights:[["UTS",35],["UAS",35],["Tugas",10],["Kuis",10],["Proyek",10]]},
-  fisika: {name:"Fisika", weights:[["UTS",30],["UAS",30],["Tugas",15],["Kuis",15],["Proyek",10]]},
-  berkom: {name:"Berkom", weights:[["UTS",40],["Proyek 1",25],["Proyek 2",25],["Praktikum",10],["Tugas",2.5]]}
+  kimia: {name:"Kimia", weights:[["Tugas",5],["UTS",35],["UAS",35],["Kuis",25]], idx:[75,68,60,53,45]},
+  matematika: {name:"Matematika", weights:[["UTS",35],["UAS",35],["Tugas",10],["Kuis",10],["Proyek",10]], idx:[80,73,65,57,50]},
+  fisika: {name:"Fisika", weights:[["UTS",30],["UAS",30],["Tugas",15],["Kuis",15],["Proyek",10]], idx:[75,68,60,55,50]},
+  berkom: {name:"Berkom", weights:[["UTS",40],["Proyek 1",25],["Proyek 2",25],["Praktikum",10],["Tugas",2.5]], idx:[81.25,75,68.75,56.25,43.75]}
 };
-// Ambang default contoh; sesuaikan dengan aturan resmi tiap mata kuliah.
+// Label indeks; ambang tiap mata kuliah ada di SUBJECTS[...].idx (urut sesuai label).
 const INDEXES = [
   {label:"A", min:80}, {label:"AB", min:75}, {label:"B", min:70},
   {label:"BC", min:65}, {label:"C", min:55}
 ];
+const getIndexes = () => INDEXES.map((x,i)=>({label:x.label,min:SUBJECTS[subjectKey].idx[i]}));
 let subjectKey = null, target = "A";
 const values = {};
 const $ = id => document.getElementById(id);
@@ -95,7 +96,7 @@ function calculate(){
  });
  const invalid=fields.filter(f=>f.value!==null&&(!Number.isFinite(f.value)||f.value<0||f.value>100));
  const missing=fields.filter(f=>f.value===null);
- const threshold=INDEXES.find(x=>x.label===target).min;
+ const threshold=getIndexes().find(x=>x.label===target).min;
  if(invalid.length){
    $("result").innerHTML=`<h2>Periksa nilai</h2><p>Semua nilai harus berada pada rentang 0–100.</p>`;
    return;
@@ -106,7 +107,7 @@ function calculate(){
  }
  const known=fields.reduce((sum,f)=>sum+(f.value===null?0:f.value*f.weight/100),0);
  if(missing.length===0){
-   const idx=INDEXES.find(x=>known+1e-9>=x.min)||{label:"Di bawah C"};
+   const idx=getIndexes().find(x=>known+1e-9>=x.min)||{label:"Di bawah C"};
    $("result").innerHTML=`<h2>Hasil nilai akhir</h2><div class="big">${fmt(known)} / 100</div><p>Perkiraan indeks: <b>${idx.label}</b></p><p class="hint">Target pilihan: ${target} (ambang ${threshold}).</p>`;
    return;
  }
