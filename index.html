@@ -99,7 +99,7 @@ function calculate(){
  const missing=fields.filter(f=>f.value===null);
  const threshold=getIndexes().find(x=>x.label===target).min;
  
- const isTroll = target === "SAYA TIDAK MAU LULUS (<C)";
+ const isTroll = target === "SAYA TIDAK MAU LULUS:(";
  const trollMsg = isTroll ? "<p style='color:var(--bad); font-weight:850; font-size:1.1rem; margin-top:15px'>Kenapa gak mau LULUS dawg 😭😭😭</p>" : "";
  
  const imgMungkin = `<img src="mungkin.png" alt="Mungkin" style="max-height:80px; display:block; margin: 10px 0; border-radius:8px;">`;
