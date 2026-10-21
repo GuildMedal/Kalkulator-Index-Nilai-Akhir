@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101827">
+<title>Kalkulator Indeks ITB</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#121d30;--panel2:#19263b;--line:#2a3a52;--text:#edf3fb;--muted:#a5b4c9;--accent:#8ab4ff;--good:#7ee0b0;--bad:#ff8585}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(160deg,#0b1220,#111b2d);font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:var(--text);min-height:100vh;padding:24px 14px}
+main{max-width:760px;margin:auto}.eyebrow{color:var(--accent);font-size:.8rem;letter-spacing:.13em;text-transform:uppercase;font-weight:750}h1{font-size:clamp(1.8rem,5vw,2.5rem);margin:.35rem 0}p{line-height:1.5}.muted{color:var(--muted)}.panel{background:rgba(18,29,48,.96);border:1px solid var(--line);border-radius:18px;padding:20px;margin:16px 0;box-shadow:0 10px 30px #0002}.step{font-size:.8rem;color:var(--accent);font-weight:750;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}label{display:block;font-weight:650;margin-bottom:7px}select,input[type=number]{width:100%;background:#0b1424;border:1px solid #3a4b64;color:var(--text);border-radius:10px;padding:12px;font:inherit}select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px}.subject-grid,.target-grid,.score-grid{display:grid;gap:10px}.subject-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.target-grid{grid-template-columns:repeat(5,minmax(0,1fr));margin-top:8px}.choice{border:1px solid var(--line);background:#0d1728;color:var(--text);padding:12px 4px;border-radius:10px;font-weight:750;font-size:1rem;cursor:pointer}.choice.active{background:var(--accent);color:#102039;border-color:var(--accent)}.subject-btn{text-align:left;padding:14px}.subject-btn small{display:block;font-weight:450;color:var(--muted);margin-top:4px}.subject-btn.active small{color:#263e5f}.score-grid{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:14px}.score-field{background:#0d1728;border:1px solid var(--line);border-radius:12px;padding:12px}.score-field label{font-size:.92rem}.weight{color:var(--muted);font-size:.78rem;font-weight:500}.hint{font-size:.85rem;color:var(--muted);margin:10px 0 0}.result{padding:18px;border-radius:14px;background:#0c1728;border:1px solid var(--line);margin-top:14px}.result h2{margin:0 0 5px;font-size:1.1rem}.big{font-size:2rem;font-weight:850;letter-spacing:-.03em}.status{display:inline-block;font-weight:850;padding:7px 11px;border-radius:8px;margin:8px 0}.possible{background:#143b31;color:var(--good)}.impossible{background:#451f2a;color:var(--bad)}.bar-row{margin:18px 0}.bar-head{display:flex;justify-content:space-between;gap:12px;align-items:center;font-weight:650}.bar-head strong{font-size:1.1rem;color:var(--accent)}input[type=range]{width:100%;accent-color:var(--accent);margin:14px 0 4px}.range-labels{display:flex;justify-content:space-between;color:var(--muted);font-size:.75rem}.summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}.metric{background:#142239;border-radius:12px;padding:13px}.metric span{display:block;color:var(--muted);font-size:.8rem}.metric strong{font-size:1.25rem}.hidden{display:none!important}.footer{font-size:.8rem;color:var(--muted);text-align:center;margin:26px 0}.warning{color:#ffd38a}.component-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.pill{border:1px solid var(--line);border-radius:99px;padding:5px 9px;color:var(--muted);font-size:.78rem}
+@media(max-width:480px){body{padding:18px 10px}.panel{padding:15px}.target-grid{gap:5px}.choice{font-size:.9rem;padding:11px 2px}.score-grid{gap:8px}.score-field{padding:10px}.big{font-size:1.7rem}}
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">ITB · Academic helper</div>
+  <h1>Kalkulator Indeks</h1>
+  <p class="muted">Pilih mata kuliah, masukkan nilai yang sudah kamu punya, lalu cari kombinasi nilai untuk mengejar indeks target.</p>
+
+  <section class="panel">
+    <div class="step">01 · Pilih mata kuliah</div>
+    <div class="subject-grid" id="subjectButtons"></div>
+    <div id="subjectInfo" class="hint">Pilih mata kuliah untuk menampilkan komponen nilainya.</div>
+  </section>
+
+  <section class="panel hidden" id="gradePanel">
+    <div class="step">02 · Pilih indeks target</div>
+    <div class="target-grid" id="targetButtons"></div>
+    <p class="hint">Ambang indeks saat ini merupakan asumsi yang bisa diedit pada bagian konfigurasi di kode.</p>
+    <div class="step" style="margin-top:24px">03 · Masukkan nilai (0–100)</div>
+    <div id="scoreFields" class="score-grid"></div>
+    <p class="hint" id="emptyHint">Kosongkan maksimal dua nilai yang belum diketahui.</p>
+    <div id="result" class="result" aria-live="polite"><p class="muted">Isi nilai untuk melihat hasil perhitungan.</p></div>
+  </section>
+  <div class="footer">Perhitungan berjalan di browser kamu. Nilai tidak dikirim ke server.</div>
+</main>
+<script>
+const SUBJECTS = {
+  kimia: {name:"Kimia", weights:[["Tugas",5],["UTS",35],["UAS",35],["Kuis",25]]},
+  matematika: {name:"Matematika", weights:[["UTS",35],["UAS",35],["Tugas",10],["Kuis",10],["Proyek",10]]},
+  fisika: {name:"Fisika", weights:[["UTS",30],["UAS",30],["Tugas",15],["Kuis",15],["Proyek",10]]},
+  berkom: {name:"Berkom", weights:[["UTS",40],["Proyek 1",25],["Proyek 2",25],["Praktikum",10],["Tugas",2.5]]}
+};
+// Ambang default contoh; sesuaikan dengan aturan resmi tiap mata kuliah.
+const INDEXES = [
+  {label:"A", min:80}, {label:"AB", min:75}, {label:"B", min:70},
+  {label:"BC", min:65}, {label:"C", min:55}
+];
+let subjectKey = null, target = "A";
+const values = {};
+const $ = id => document.getElementById(id);
+const fmt = n => Number(n).toLocaleString("id-ID",{maximumFractionDigits:2});
+function init(){
+  $("subjectButtons").innerHTML = Object.entries(SUBJECTS).map(([key,s]) =>
+    `<button class="choice subject-btn" data-subject="${key}">${s.name}<small>${s.weights.map(w=>w[0]).join(" · ")}</small></button>`
+  ).join("");
+  $("subjectButtons").addEventListener("click",e=>{
+    const b=e.target.closest("[data-subject]"); if(!b)return;
+    selectSubject(b.dataset.subject);
+  });
+  $("targetButtons").innerHTML=INDEXES.map(i=>`<button class="choice ${i.label===target?"active":""}" data-target="${i.label}">${i.label}</button>`).join("");
+  $("targetButtons").addEventListener("click",e=>{
+    const b=e.target.closest("[data-target]");if(!b)return;
+    target=b.dataset.target;
+    document.querySelectorAll("[data-target]").forEach(x=>x.classList.toggle("active",x.dataset.target===target));
+    calculate();
+  });
+}
+function selectSubject(key){
+  subjectKey=key;
+  document.querySelectorAll("[data-subject]").forEach(x=>x.classList.toggle("active",x.dataset.subject===key));
+  $("gradePanel").classList.remove("hidden");
+  const s=SUBJECTS[key];
+  $("subjectInfo").innerHTML=`<b>${s.name}</b> · Bobot total: ${fmt(s.weights.reduce((a,w)=>a+w[1],0))}%`;
+  $("scoreFields").innerHTML=s.weights.map(([name,weight],i)=>{
+    const k=key+"_"+i;
+    if(!(k in values))values[k]="";
+    return `<div class="score-field"><label for="${k}">${name} <span class="weight">· ${fmt(weight)}%</span></label><input id="${k}" data-score="${i}" type="number" min="0" max="100" step="any" placeholder="Belum ada nilai" value="${values[k]}" inputmode="decimal"></div>`;
+  }).join("");
+  $("scoreFields").oninput=e=>{
+    const inp=e.target.closest("[data-score]");if(!inp)return;
+    values[subjectKey+"_"+inp.dataset.score]=inp.value;
+    calculate();
+  };
+  calculate();
+}
+function calculate(){
+ if(!subjectKey)return;
+ const subject=SUBJECTS[subjectKey];
+ // Bobot dipakai apa adanya (tanpa normalisasi), jadi total 102,5% pada Berkom dihitung sebagaimana adanya.
+ const fields=subject.weights.map(([name,w],i)=>{
+   const el=$(subjectKey+"_"+i);
+   return {name,weight:w,rawWeight:w,value:el&&el.value.trim()!==""?Number(el.value):null,el};
+ });
+ const invalid=fields.filter(f=>f.value!==null&&(!Number.isFinite(f.value)||f.value<0||f.value>100));
+ const missing=fields.filter(f=>f.value===null);
+ const threshold=INDEXES.find(x=>x.label===target).min;
+ if(invalid.length){
+   $("result").innerHTML=`<h2>Periksa nilai</h2><p>Semua nilai harus berada pada rentang 0–100.</p>`;
+   return;
+ }
+ if(missing.length>2){
+   $("result").innerHTML=`<h2>Terlalu banyak nilai kosong</h2><p>Maksimal dua nilai boleh kosong. Saat ini ada <b>${missing.length}</b> nilai yang belum diisi.</p>`;
+   return;
+ }
+ const known=fields.reduce((sum,f)=>sum+(f.value===null?0:f.value*f.weight/100),0);
+ if(missing.length===0){
+   const idx=INDEXES.find(x=>known+1e-9>=x.min)||{label:"Di bawah C"};
+   $("result").innerHTML=`<h2>Hasil nilai akhir</h2><div class="big">${fmt(known)} / 100</div><p>Perkiraan indeks: <b>${idx.label}</b></p><p class="hint">Target pilihan: ${target} (ambang ${threshold}).</p>`;
+   return;
+ }
+ if(missing.length===1){
+   const f=missing[0], needed=(threshold-known)*100/f.weight;
+   const possible=needed<=100;
+   const clipped=Math.max(0,needed);
+   $("result").innerHTML=`<h2>Nilai yang dibutuhkan · ${f.name}</h2>
+     <div class="big">${fmt(clipped)}</div>
+     <span class="status ${possible?"possible":"impossible"}">${possible?"MUNGKIN":"TIDAK MUNGKIN"}</span>
+     <p>${needed<=0?"Nilai komponen ini tidak perlu tambahan untuk melewati ambang target.":possible?`Usahakan mendapat setidaknya ${fmt(needed)} pada ${f.name}.`:`Dibutuhkan nilai ${fmt(needed)}, melebihi nilai maksimal 100.`}</p>
+     <p class="hint">Target ${target} · Bobot efektif ${fmt(f.weight)}% · Ambang indeks ${threshold}.</p>`;
+   return;
+ }
+ const [f1,f2]=missing;
+ // Slider yang digeser menentukan slider lainnya: yang lain selalu menunjukkan nilai MINIMUM
+ // yang dibutuhkan. Rentang slider melebar di atas 100 supaya kebutuhan nilai >100 tetap terlihat.
+ const need1=y=>(threshold-known-y*f2.weight/100)*100/f1.weight;
+ const need2=x=>(threshold-known-x*f1.weight/100)*100/f2.weight;
+ const max1=Math.max(100,Math.ceil(need1(0))), max2=Math.max(100,Math.ceil(need2(0)));
+ const can=threshold<=known+f1.weight+f2.weight+1e-9;
+ const clamp=(v,m)=>Math.max(0,Math.min(m,v));
+ const start1=clamp(Math.max(0,need1(100)),max1);
+ $("result").innerHTML=`<h2>Kombinasi nilai minimum</h2>
+   <span class="status ${can?"possible":"impossible"}">${can?"MUNGKIN":"TIDAK MUNGKIN"}</span>
+   <p class="muted">${f1.name} dan ${f2.name} masih kosong. Geser salah satu slider; slider lainnya otomatis menunjukkan nilai minimum yang dibutuhkan, termasuk jika melebihi 100.</p>
+   <div class="bar-row"><div class="bar-head"><label for="slider1">${f1.name}</label><strong id="v1"></strong></div>
+   <input id="slider1" type="range" min="0" max="${max1}" step="any"><div class="range-labels"><span>0</span><span>100</span><span>${max1>100?max1:""}</span></div></div>
+   <div class="bar-row"><div class="bar-head"><label for="slider2">${f2.name}</label><strong id="v2"></strong></div>
+   <input id="slider2" type="range" min="0" max="${max2}" step="any"><div class="range-labels"><span>0</span><span>100</span><span>${max2>100?max2:""}</span></div></div>
+   <div id="comboStatus"></div>
+   <p class="hint">Nilai di atas 100 hanya menunjukkan berapa yang akan dibutuhkan; nilai komponen sebenarnya maksimal 100.</p>`;
+ const s1=$("slider1"),s2=$("slider2");
+ function update(which){
+   let x=Number(s1.value),y=Number(s2.value);
+   if(which===0){x=start1;y=need2(x);}
+   else if(which===1){y=need2(x);}
+   else{x=need1(y);}
+   x=clamp(x,max1);y=clamp(y,max2);
+   s1.value=x;s2.value=y;
+   const score=known+x*f1.weight/100+y*f2.weight/100;
+   const over=x>100+1e-9||y>100+1e-9;
+   const reached=score+1e-9>=threshold&&!over;
+   $("v1").textContent=fmt(x);$("v1").style.color=x>100?"var(--bad)":"";
+   $("v2").textContent=fmt(y);$("v2").style.color=y>100?"var(--bad)":"";
+   const hi=x>100?f1:f2, lo=hi===f1?f2:f1;
+   const loV=hi===f1?y:x, hiV=hi===f1?x:y;
+   $("comboStatus").innerHTML=`<div class="summary">
+     <div class="metric"><span>Nilai akhir dari kombinasi</span><strong>${fmt(score)}</strong></div>
+     <div class="metric"><span>Target ${target}</span><strong>${reached?"TERCAPAI":over?"TIDAK MUNGKIN":"BELUM TERCAPAI"}</strong></div>
+   </div><p class="hint ${over?"warning":""}">${over?`Meski ${lo.name} kamu dapat ${fmt(loV)}, kamu tetap butuh ${fmt(hiV)} di ${hi.name} (melebihi 100), jadi kombinasi ini tidak mungkin.`:reached?`Kombinasi ini mencapai ambang ${threshold}.`:`Kombinasi ini belum mencapai ambang ${threshold}.`}</p>`;
+ }
+ s1.addEventListener("input",()=>update(1));s2.addEventListener("input",()=>update(2));update(0);
+}
+init();
+</script>
+</body>
+</html>
